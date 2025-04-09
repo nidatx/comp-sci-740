@@ -68,9 +68,9 @@ def run_guardian(folder_path,dur=3600):
 
     options = webdriver.ChromeOptions()
     options.binary_location = CHROME_BINARY ## using chrome for testing
-    # options.add_argument("--disable-blink-features=AutomationControlled")  # adding argument to disable the AutomationControlled flag 
-    # options.add_experimental_option("excludeSwitches", ["enable-automation"]) # exclude the collection of enable-automation switches 
-    # options.add_experimental_option("useAutomationExtension", False) # turn-off userAutomationExtension 
+    options.add_argument("--disable-blink-features=AutomationControlled")  # adding argument to disable the AutomationControlled flag 
+    options.add_experimental_option("excludeSwitches", ["enable-automation"]) # exclude the collection of enable-automation switches 
+    options.add_experimental_option("useAutomationExtension", False) # turn-off userAutomationExtension 
     
     driver = webdriver.Chrome(options=options) # setting the driver path and requesting a page 
 

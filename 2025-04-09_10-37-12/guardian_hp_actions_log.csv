@@ -1,0 +1,4 @@
+"website,timestamp,action",duration,user
+https://www.theguardian.com/us,2025-04-09T10:37:13.943125,open_website,-1,user1
+https://www.theguardian.com/us,2025-04-09T10:37:14.004604,scroll,-1,user1
+https://www.theguardian.com/us,2025-04-09T10:37:20.251097,open_website,-1,user1
