@@ -75,13 +75,16 @@ class WebsiteAutomator:
         return csv_file
         
     def log_action(self, action, duration=-1, website=None):
+        website_inside = None
         if website is None:
-            website = self.website
+            website_inside = self.website
+        else:
+            website_inside = website
     
         with open(self.csv_file, mode="a", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
             writer.writerow([
-                self.website,
+                website_inside,
                 datetime.datetime.now().isoformat(timespec="microseconds"),
                 action,
                 duration,
