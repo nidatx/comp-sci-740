@@ -22,7 +22,7 @@ ACTIONS = {
     'SCROLL': "scroll",
     'SCROLL_DUR': "scroll_duration",
     'SEARCH': "search",
-    'WAIT': "wait",
+    'WAIT': "wait", ## denotes active waiting time 
     'ACTIVE_WAIT': "active_wait",
     'INACTIVE_WAIT': "inactive_wait",
     'CLICK': "click",
@@ -117,7 +117,7 @@ class WebsiteAutomator:
                 
                 ## scrolling
                 self.log_action(action=ACTIONS['SCROLL'])
-                random_scroll = random.randint(0, total_scroll_height)
+                random_scroll = random.randint(0, total_scroll_height) ### randomly pick from total scroll height
                 
                 if direction == 'up':
                     print("scrolling up")
@@ -131,12 +131,12 @@ class WebsiteAutomator:
                 scroll_dur = self.slow_scroll(random_scroll)
                 self.log_action(action=ACTIONS['SCROLL_DUR'], duration=scroll_dur)
                 
-                wait_time = random.randint(self.min_wait, self.max_wait)
-                self.log_action(action=ACTIONS['WAIT'], duration=wait_time)
-                sleep(wait_time)
+                wait_time = random.randint(self.min_wait, self.max_wait) ## ACTIVE WAIT
+                self.log_action(action=ACTIONS['WAIT'], duration=wait_time) 
+                sleep(wait_time) 
             
             elif choose==ACTIONS["WAIT"]:
-                wait_time = random.randint(self.min_wait, self.max_wait)
+                wait_time = random.randint(self.min_wait, self.max_wait) ## ACTIVE WAIT
                 self.log_action(action=ACTIONS['WAIT'], duration=wait_time)
                 sleep(wait_time)
     
@@ -153,10 +153,8 @@ class WebsiteAutomator:
         
         while time.time() < end_time:
             
-            wait_time = random.randint(2,5)
-            self.log_action(ACTIONS['INACTIVE_WAIT'],duration=wait_time)
-            
-            # seraching for random website fromthe list
+           
+            # seraching for random website from the list
             random_website = random.choice(websites_list)
             print(f"Search: {random_website}")
             search_box = self.driver.find_element(By.NAME, "q")
@@ -167,7 +165,8 @@ class WebsiteAutomator:
                 sleep(0.5)
             search_box.send_keys(Keys.RETURN)
             self.log_action(ACTIONS['SEARCH'])
-            self.log_action(ACTIONS['INACTIVE_WAIT'],duration=6)
+            
+            self.log_action(ACTIONS['INACTIVE_WAIT'],duration=6) ## dont change this one because we want to wait for all the links to show up
             sleep(6)
             
             # Browse results
@@ -186,8 +185,9 @@ class WebsiteAutomator:
             link_choose = random.choice(links)
             print(f"link: {link_choose}")
             try:
-                self.driver.get(link_choose)
+                
                 self.log_action(action=ACTIONS['OPEN_WEBSITE'], website=link_choose)
+                self.driver.get(link_choose)
                 
                 self.browse_page()
 
@@ -195,8 +195,9 @@ class WebsiteAutomator:
                 print(f"Could not follow link:{link_choose}")
         
     def automate_guardian(self, duration_sec):
-        self.driver.get(WEBSITES['GUARDIAN'])
+        
         self.log_action(action=ACTIONS['OPEN_WEBSITE'])
+        self.driver.get(WEBSITES['GUARDIAN'])
         
         start_time = time.time()
         end_time = start_time + duration_sec
@@ -205,7 +206,11 @@ class WebsiteAutomator:
         
         # Get article links
         data_links_dict = {}
-        time.sleep(5)
+
+        
+        self.log_action(ACTIONS['INACTIVE_WAIT'],duration=5)
+        sleep(5) ## don't change this wait otherwise we get 'cannot find element' error
+
         elements_with_data_link = self.driver.find_elements(By.CSS_SELECTOR, "[data-link-name]")
         for elem in elements_with_data_link:
             data_link_name = elem.get_attribute("data-link-name")
@@ -231,16 +236,20 @@ class WebsiteAutomator:
                     print(f" href -> {href}")
 
         print(len(data_links_dict))
-        sleep(5)
-        self.log_action(ACTIONS["INACTIVE_WAIT"],duration=5)
-
-        # Filter out non-article links
-        keys_to_remove = {'header', 'skip', 'secondary', 'topbar', 'footer', 
-                          'keyword', 'back to top', 'cookie', 'terms', 'privacy', 
-                          'secure drop', 'complaints', 'nav2', 'subnav', 'us-news', 'Front'}
         
+        self.log_action(ACTIONS["INACTIVE_WAIT"],duration=5) 
+        sleep(5) ## don't change this either
+
+        # # Filter out non-article links
+        # keys_to_remove = {'header', 'skip', 'secondary', 'topbar', 'footer', 
+        #                   'keyword', 'back to top', 'cookie', 'terms', 'privacy', 
+        #                   'secure drop', 'complaints', 'nav2', 'subnav', 'us-news', 'Front'}
+        
+        # filtered_dict = {k: v for k, v in data_links_dict.items() 
+        #                 if not any(sub in k for sub in keys_to_remove)}
+        keys_to_keep = {'sports', 'most_viewed', 'most_popular', 'headlines','around-the-world'}
         filtered_dict = {k: v for k, v in data_links_dict.items() 
-                        if not any(sub in k for sub in keys_to_remove)}
+                         if any(sub in k for sub in keys_to_keep)}
         
         # Save links for reference
         with open("links.txt", "w", encoding="utf-8") as f:
@@ -256,23 +265,24 @@ class WebsiteAutomator:
                 self.browse_page()
 
     def automate_tiktok(self, duration_sec):
-        # Load cookies for login
+        # Load cookies for login - uncomment this if you want to login
         # with open("tiktok_cookies.pkl", "rb") as cookie_file:
         #     cookies = pkl.load(cookie_file)
         
-        self.driver.get(WEBSITES['TIKTOK'])
-        self.log_action(action=ACTIONS['OPEN_WEBSITE'])
+        # self.driver.get(WEBSITES['TIKTOK'])
+        # self.log_action(action=ACTIONS['OPEN_WEBSITE'])
         
-        # for cookie in cookies:
-        #     self.driver.add_cookie(cookie)
+        # # for cookie in cookies:
+        # #     self.driver.add_cookie(cookie)
         
-        self.log_action(action=ACTIONS['LOGIN'])
-        self.driver.refresh()
-        self.log_action(action=ACTIONS['OPEN_WEBSITE'])
+        # # self.log_action(action=ACTIONS['LOGIN']) 
+        
+        # self.driver.refresh()
+        # self.log_action(action=ACTIONS['OPEN_WEBSITE'])
         
         # Go to For You page
-        self.driver.get("https://www.tiktok.com/foryou")
         self.log_action(action=ACTIONS['OPEN_WEBSITE'], website="https://www.tiktok.com/foryou")
+        self.driver.get("https://www.tiktok.com/foryou")
         
         start_time = time.time()
         end_time = start_time + duration_sec
@@ -280,9 +290,10 @@ class WebsiteAutomator:
         
         while time.time() < end_time:
             try:
-                wait = WebDriverWait(self.driver, 20)
-                video_element = wait.until(EC.presence_of_element_located((By.TAG_NAME, "video")))
                 self.log_action(action=ACTIONS['INACTIVE_WAIT'])
+                
+                wait = WebDriverWait(self.driver, 20) ## wait up to max 20 seconds, don't change
+                video_element = wait.until(EC.presence_of_element_located((By.TAG_NAME, "video")))
                 
                 print(f"Found video element: {video_element}")
                 duration = self.driver.execute_script("return arguments[0].duration;", video_element)
@@ -290,7 +301,7 @@ class WebsiteAutomator:
                 if not duration or duration != duration: 
                     duration = 5  
                 
-                watch_time = random.uniform(0, duration)
+                watch_time = random.uniform(0, duration) ## don't change
                 video_count += 1
                 print(f"Video #{video_count}: duration={duration:.2f}s, watching {watch_time:.2f}s")
                 
@@ -301,7 +312,8 @@ class WebsiteAutomator:
                 body.send_keys(Keys.ARROW_DOWN)
                 self.log_action(action=ACTIONS['SCROLL'])
 
-                sleep(2)
+                self.log_action(action=ACTIONS['INACTIVE_WAIT'], duration = 2)
+                sleep(2) ## don't change
                 
             except Exception as e:
                 print(f"Error watching TikTok video: {str(e)}")
@@ -328,11 +340,11 @@ def main():
         user_id=0,
         max_wait=5,
         min_wait=2,
-        website=WEBSITES['GUARDIAN'],
+        website=WEBSITES['TIKTOK'],
         max_actions=7
     )
     
-    automator.run(duration_minutes=37)
+    automator.run(duration_minutes=1)
 
 if __name__ == "__main__":
     main()

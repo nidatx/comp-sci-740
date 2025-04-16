@@ -21,6 +21,7 @@ OPEN_WEBSITE = "open_website"
 SCROLL = "scroll"
 WAIT = "wait"
 CLICK="click"
+
 csv_headers=['website,timestamp,action','duration','user']
 
 CHROME_BINARY = "/Users/Patron/Downloads/chrome-mac-arm64/Google Chrome for Testing.app"
