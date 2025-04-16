@@ -1,0 +1,5 @@
+website,timestamp,action,duration,user
+https://www.google.com,2025-04-15T13:29:52.107372,open_website,-1,0
+https://www.google.com,2025-04-15T13:29:52.108585,inactive_wait,3,0
+https://www.google.com,2025-04-15T13:29:53.039325,search,-1,0
+https://www.google.com,2025-04-15T13:29:53.039544,inactive_wait,6,0

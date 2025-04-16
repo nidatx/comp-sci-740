@@ -24,7 +24,7 @@ CLICK="click"
 csv_headers=['website,timestamp,action','duration','user']
 
 CHROME_BINARY = "/Users/Patron/Downloads/chrome-mac-arm64/Google Chrome for Testing.app"
-CHROMEDRIVER_PATH = "/Users/Patron/Downloads/chromedriver-mac-arm64/chromdriver"  # (if not using Selenium's auto-download)
+
 
 
 
