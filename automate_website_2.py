@@ -24,6 +24,7 @@ import pickle as pkl
 import os
 import sys
 import time
+import numpy as np
 
 # Constants
 ACTIONS = {
@@ -56,6 +57,13 @@ class WebsiteAutomator:
         self.max_actions = max_actions
         self.driver = self._setup_driver()
         self.csv_file = self._setup_logging()
+    
+    def _generate_active_OFF_time(self):
+        a = 1.46 # shape
+        b = 0.382 ## scale parameter
+        s = b*np.random.weibull(a, 1)
+
+        return s[0]
         
     def _setup_driver(self):
         
@@ -193,12 +201,15 @@ class WebsiteAutomator:
                 scroll_dur = self.slow_scroll(random_scroll)
                 self.log_action(action=ACTIONS['SCROLL_DUR'], duration=scroll_dur)
                 
-                wait_time = random.randint(self.min_wait, self.max_wait) ## ACTIVE WAIT
+                # wait_time = random.randint(self.min_wait, self.max_wait) ## ACTIVE WAIT
+                wait_time = self._generate_active_OFF_time()
                 self.log_action(action=ACTIONS['WAIT'], duration=wait_time) 
                 sleep(wait_time) 
             
             elif choose==ACTIONS["WAIT"]:
-                wait_time = random.randint(self.min_wait, self.max_wait) ## ACTIVE WAIT
+                # wait_time = random.randint(self.min_wait, self.max_wait) ## ACTIVE WAIT
+                wait_time = self._generate_active_OFF_time()
+                
                 self.log_action(action=ACTIONS['WAIT'], duration=wait_time)
                 sleep(wait_time)
     
@@ -402,7 +413,7 @@ def main():
         user_id=0,
         max_wait=5,
         min_wait=2,
-        website=WEBSITES['TIKTOK'],
+        website=WEBSITES['GUARDIAN'],
         max_actions=7
     )
     
