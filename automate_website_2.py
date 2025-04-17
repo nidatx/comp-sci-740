@@ -70,14 +70,17 @@ class WebsiteAutomator:
     
     def _setup_edge_driver(self):
         
-        options = EdgeOptions()
+        edge_driver_path = "/Users/Patron/Downloads/edgedriver_mac64_m1/msedgedriver"
         
-        options.add_argument("start-maximized")
+        options = EdgeOptions()
+    
+       
         options.add_argument("--disable-blink-features=AutomationControlled") 
         options.add_experimental_option("excludeSwitches", ["enable-automation"]) 
         options.add_experimental_option("useAutomationExtension", False) 
         
-        service = EdgeService(executable_path=self.browser_path)
+        
+        service = EdgeService(edge_driver_path)
         driver = webdriver.Edge(service=service, options=options)
         driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})") 
         
@@ -87,7 +90,7 @@ class WebsiteAutomator:
         
         options = ChromeOptions() 
             
-        options.binary_location = "/Users/Patron/Downloads/chrome-mac-arm64/Google Chrome for Testing.app"
+        options.binary_location = "/Users/Patron/Downloads/chrome-mac-arm64/Google Chrome for Testing.app" ## location for browser
         
         options.add_argument("--disable-blink-features=AutomationControlled") 
         options.add_experimental_option("excludeSwitches", ["enable-automation"]) 
@@ -99,12 +102,13 @@ class WebsiteAutomator:
         return driver
     
     def _setup_firefox_driver(self):
+        
         options = FirefoxOptions() 
-        options.binary_location = self.browser_path
+        
         options.set_preference("dom.webdriver.enabled", False)
         options.set_preference("useAutomationExtension", False)
         
-        service = FirefoxService(executable_path=self.browser_path)
+        service = FirefoxService(executable_path="/Users/Patron/Downloads/geckodriver") ## path to driver
         driver = webdriver.Firefox(service=service, options=options)
         
         driver.execute_script("""
@@ -394,7 +398,7 @@ def main():
 
     
     automator = WebsiteAutomator(
-        browser_type = "google", ## using chrome for testing
+        browser_type = "edge", ## using chrome for testing
         user_id=0,
         max_wait=5,
         min_wait=2,
