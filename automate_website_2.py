@@ -1,8 +1,17 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from time import sleep
-from selenium.webdriver.chrome.service import Service
+
 from webdriver_manager.chrome import ChromeDriverManager
+
+# WebDriver imports (service + options)
+from selenium.webdriver.chrome.service import Service as ChromeService
+from selenium.webdriver.firefox.service import Service as FirefoxService
+from selenium.webdriver.edge.service import Service as EdgeService
+from selenium.webdriver.chrome.options import Options as ChromeOptions
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
+from selenium.webdriver.edge.options import Options as EdgeOptions
+
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
@@ -38,27 +47,73 @@ WEBSITES = {
 }
 
 class WebsiteAutomator:
-    def __init__(self, user_id, max_wait, min_wait, website, max_actions, binary_path):
+    def __init__(self, user_id, max_wait, min_wait, website, max_actions, browser_type=""):
         self.user_id = user_id
         self.max_wait = max_wait
         self.min_wait = min_wait
         self.website = website
+        self.browser_type = browser_type
         self.max_actions = max_actions
-        self.driver = self._setup_driver(binary_path)
+        self.driver = self._setup_driver()
         self.csv_file = self._setup_logging()
         
-    def _setup_driver(self, chrome_binary_path):
+    def _setup_driver(self):
         
-        options = webdriver.ChromeOptions() 
-        options.binary_location = chrome_binary_path
+        if self.browser_type=="google":
+            return self._setup_chrome_driver()
+        elif self.browser_type == "firefox":
+            return self._setup_firefox_driver()
+        elif self.browser_type == "edge":
+            return self._setup_edge_driver()
+        else:
+            raise ValueError("Unknown browser type!! STOP NOW! Browser: {self.browser_type}")
+    
+    def _setup_edge_driver(self):
+        
+        options = EdgeOptions()
+        
+        options.add_argument("start-maximized")
+        options.add_argument("--disable-blink-features=AutomationControlled") 
+        options.add_experimental_option("excludeSwitches", ["enable-automation"]) 
+        options.add_experimental_option("useAutomationExtension", False) 
+        
+        service = EdgeService(executable_path=self.browser_path)
+        driver = webdriver.Edge(service=service, options=options)
+        driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})") 
+        
+        return driver
+    
+    def _setup_chrome_driver(self):
+        
+        options = ChromeOptions() 
+            
+        options.binary_location = "/Users/Patron/Downloads/chrome-mac-arm64/Google Chrome for Testing.app"
         
         options.add_argument("--disable-blink-features=AutomationControlled") 
         options.add_experimental_option("excludeSwitches", ["enable-automation"]) 
         options.add_experimental_option("useAutomationExtension", False) 
+        
         driver = webdriver.Chrome(options=options)
         driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})") 
         
         return driver
+    
+    def _setup_firefox_driver(self):
+        options = FirefoxOptions() 
+        options.binary_location = self.browser_path
+        options.set_preference("dom.webdriver.enabled", False)
+        options.set_preference("useAutomationExtension", False)
+        
+        service = FirefoxService(executable_path=self.browser_path)
+        driver = webdriver.Firefox(service=service, options=options)
+        
+        driver.execute_script("""
+            Object.defineProperty(navigator, 'webdriver', {
+                get: () => undefined
+            });
+        """)
+        return driver
+    
         
     def _setup_logging(self):
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -339,7 +394,7 @@ def main():
 
     
     automator = WebsiteAutomator(
-        binary_path = "/Users/Patron/Downloads/chrome-mac-arm64/Google Chrome for Testing.app", ## using chrome for testing
+        browser_type = "google", ## using chrome for testing
         user_id=0,
         max_wait=5,
         min_wait=2,
