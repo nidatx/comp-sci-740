@@ -1,7 +1,7 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from time import sleep
-
+from find_cache import find_cached_links, read_websites_from_file, build_google_search_cache
 from webdriver_manager.chrome import ChromeDriverManager
 
 # WebDriver imports (service + options)
@@ -11,6 +11,7 @@ from selenium.webdriver.edge.service import Service as EdgeService
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.edge.options import Options as EdgeOptions
+from selenium.webdriver.chrome.service import Service
 
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -33,8 +34,8 @@ ACTIONS = {
     'SCROLL_DUR': "scroll_duration",
     'SEARCH': "search",
     'WAIT': "wait", ## denotes active waiting time 
-    'ACTIVE_WAIT': "active_wait",
-    'INACTIVE_WAIT': "inactive_wait",
+    'ACTIVE_WAIT': "inactive_wait", # inactive wait is when the user is looking at the screen or doing an action like scrolling
+    'INACTIVE_WAIT': "active_wait", # active wait time is when the user is waiting for the page to load
     'CLICK': "click",
     'LOGIN': "login"
 }
@@ -48,7 +49,7 @@ WEBSITES = {
 }
 
 class WebsiteAutomator:
-    def __init__(self, user_id, max_wait, min_wait, website, max_actions, browser_type=""):
+    def __init__(self, user_id, max_wait, min_wait, website, max_actions, caching=False, browser_type=""):
         self.user_id = user_id
         self.max_wait = max_wait
         self.min_wait = min_wait
@@ -57,6 +58,7 @@ class WebsiteAutomator:
         self.max_actions = max_actions
         self.driver = self._setup_driver()
         self.csv_file = self._setup_logging()
+        self.caching = caching
     
     def _generate_active_OFF_time(self):
         a = 1.46 # shape
@@ -103,7 +105,7 @@ class WebsiteAutomator:
         options.add_argument("--disable-blink-features=AutomationControlled") 
         options.add_experimental_option("excludeSwitches", ["enable-automation"]) 
         options.add_experimental_option("useAutomationExtension", False) 
-        
+        # driver = webdriver.Chrome(options=options, service=Service(ChromeDriverManager().install()))
         driver = webdriver.Chrome(options=options)
         driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})") 
         
@@ -216,67 +218,125 @@ class WebsiteAutomator:
     def automate_google(self, duration_sec):
         self.driver.get(WEBSITES['GOOGLE'])
         self.log_action(action=ACTIONS['OPEN_WEBSITE'])
-        
-        # Load search terms
-        with open("websites_small.txt", "r", encoding="utf-8") as file:
-            websites_list = [line.strip() for line in file if line.strip()]
-        
-        start_time = time.time()
-        end_time = start_time + duration_sec
-        
-        while time.time() < end_time:
+        if self.caching == False:
+            # Load search terms
+            with open("websites_small.txt", "r", encoding="utf-8") as file:
+                websites_list = [line.strip() for line in file if line.strip()]
             
-           
-            # seraching for random website from the list
-            random_website = random.choice(websites_list)
-            print(f"Search: {random_website}")
-            search_box = self.driver.find_element(By.NAME, "q")
-            search_box.clear()
+            start_time = time.time()
+            end_time = start_time + duration_sec
             
-            for i in random_website:
-                search_box.send_keys(i)
-                sleep(0.5)
-            search_box.send_keys(Keys.RETURN)
-            self.log_action(ACTIONS['SEARCH'])
-            
-            self.log_action(ACTIONS['INACTIVE_WAIT'],duration=6) ## dont change this one because we want to wait for all the links to show up
-            sleep(6)
-            
-            # Browse results
-            self.browse_page()
-            
-            # follow a random link on page
-            results = self.driver.find_elements(By.TAG_NAME, "a")
-            links = []
-            for element in results:
-                href = element.get_attribute("href")
+            while time.time() < end_time:
                 
-                if href != None and "accounts" not in href and "support" not in href:
-                    links.append(href)
             
-            
-            link_choose = random.choice(links)
-            print(f"link: {link_choose}")
-            try:
+                # seraching for random website from the list
+                random_website = random.choice(websites_list)
+                print(f"Search: {random_website}")
+                search_box = self.driver.find_element(By.NAME, "q")
+                search_box.clear()
                 
-                self.log_action(action=ACTIONS['OPEN_WEBSITE'], website=link_choose)
-                self.driver.get(link_choose)
+                for i in random_website:
+                    search_box.send_keys(i)
+                    sleep(0.5)
+                search_box.send_keys(Keys.RETURN)
+                self.log_action(ACTIONS['SEARCH'], duration=random_website)
                 
+                self.log_action(ACTIONS['INACTIVE_WAIT'],duration=6) ## dont change this one because we want to wait for all the links to show up
+                sleep(6)
+                
+                # Browse results
                 self.browse_page()
+                if self.caching == False:
+                    # follow a random link on page
+                    results = self.driver.find_elements(By.TAG_NAME, "a")
+                    links = []
+                    for element in results:
+                        href = element.get_attribute("href")
+                        
+                        if href != None and "accounts" not in href and "support" not in href:
+                            links.append(href)
+                else:
+                    cache_file = find_cached_links(dir="./google", website=self.website, output_file="curr_google_cache.txt")
+                    links = read_websites_from_file(cache_file)
+                
+                
+                link_choose = random.choice(links)
+                print(f"link: {link_choose}")
+                try:
+                    
+                    self.log_action(action=ACTIONS['OPEN_WEBSITE'], website=link_choose)
+                    self.driver.get(link_choose)
+                    
+                    self.browse_page()
 
-            except:
-                print(f"Could not follow link:{link_choose}")
+                except:
+                    print(f"Could not follow link:{link_choose}")
+        else:
+            cached_links = build_google_search_cache(log_dir="./google", website=self.website) 
+            # with open("websites_small.txt", "r", encoding="utf-8") as file:
+            #     websites_list = [line.strip() for line in file if line.strip()]
+            
+            start_time = time.time()
+            end_time = start_time + duration_sec
+            
+            while time.time() < end_time:
+                
+                random_website = random.choice(list(cached_links.keys()))
+                # seraching for random website from the list
+                # random_website = random.choice(websites_list)
+                print(f"Search: {random_website}")
+                search_box = self.driver.find_element(By.NAME, "q")
+                search_box.clear()
+                
+                for i in random_website:
+                    search_box.send_keys(i)
+                    sleep(0.5)
+                search_box.send_keys(Keys.RETURN)
+                self.log_action(ACTIONS['SEARCH'], duration=random_website)
+                
+                self.log_action(ACTIONS['INACTIVE_WAIT'],duration=6) ## dont change this one because we want to wait for all the links to show up
+                sleep(6)
+                
+                # Browse results
+                self.browse_page()
+                # if self.caching == False:
+                #     # follow a random link on page
+                #     results = self.driver.find_elements(By.TAG_NAME, "a")
+                #     links = []
+                #     for element in results:
+                #         href = element.get_attribute("href")
+                        
+                #         if href != None and "accounts" not in href and "support" not in href:
+                #             links.append(href)
+                # else:
+                #     cache_file = find_cached_links(dir="./google", website=self.website, output_file="curr_google_cache.txt")
+                #     links = read_websites_from_file(cache_file)
+                
+                
+                # link_choose = random.choice(links)
+                link_choose = random.choice(list(cached_links[random_website])) # should be only one but just in case
+                print(f"link: {link_choose}")
+                try:
+                    
+                    self.log_action(action=ACTIONS['OPEN_WEBSITE'], website=link_choose)
+                    self.driver.get(link_choose)
+                    
+                    self.browse_page()
+
+                except:
+                    print(f"Could not follow link:{link_choose}")
         
     def automate_guardian(self, duration_sec):
         
         self.log_action(action=ACTIONS['OPEN_WEBSITE'])
         self.driver.get(WEBSITES['GUARDIAN'])
-        
+        # there's no browsing here? i am adding it for now
+        self.browse_page()
         start_time = time.time()
         end_time = start_time + duration_sec
 
 
-        
+        # if self.caching == False:
         # Get article links
         data_links_dict = {}
 
@@ -322,19 +382,24 @@ class WebsiteAutomator:
         #                 if not any(sub in k for sub in keys_to_remove)}
         keys_to_keep = {'sports', 'most_viewed', 'most_popular', 'headlines','around-the-world'}
         filtered_dict = {k: v for k, v in data_links_dict.items() 
-                         if any(sub in k for sub in keys_to_keep)}
+                        if any(sub in k for sub in keys_to_keep)}
+        all_links = list(filtered_dict.values())
+        links = random.choice(all_links)
         
         # Save links for reference
         with open("links.txt", "w", encoding="utf-8") as f:
             f.write(json.dumps(filtered_dict))
-        
+        if self.caching == True:
+            links = find_cached_links(dir="./theguardian", website=self.website, output_file="curr_guardian_cache.txt")
+            # all_links = read_websites_from_file(cache_file)
+            # print(f"all links: {links}")
+            # all_links = links
         # Browse articles
-        while time.time() < end_time and filtered_dict:
-            links = random.choice(list(filtered_dict.values()))
+        while time.time() < end_time and all_links:
             if links:
                 link_choose = random.choice(links)
-                self.driver.get(link_choose)
                 self.log_action(action=ACTIONS['OPEN_WEBSITE'], website=link_choose)
+                self.driver.get(link_choose)
                 self.browse_page()
 
     def automate_tiktok(self, duration_sec):
@@ -409,12 +474,13 @@ def main():
 
     
     automator = WebsiteAutomator(
-        browser_type = "edge", ## using chrome for testing
+        browser_type = "google", ## using chrome for testing
         user_id=0,
         max_wait=5,
         min_wait=2,
-        website=WEBSITES['GUARDIAN'],
-        max_actions=7
+        website=WEBSITES['GUARDIAN'], ## change this to the website you want to test
+        max_actions=7,
+        caching=False ## set to True if you want to cache the websites
     )
     
     automator.run(duration_minutes=1)
