@@ -3,7 +3,7 @@ facebook.com
 amazon.com
 yahoo.com
 aliexpress.com
-canva.com
+stackoverflow.com
 imdb.com
 github.com
 walmart.com

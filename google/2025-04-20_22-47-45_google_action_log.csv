@@ -1,0 +1,16 @@
+website,timestamp,action,duration,user
+https://www.google.com,2025-04-20T22:47:48.902164,open_website,-1,0
+https://www.google.com,2025-04-20T22:47:54.551946,search,-1,0
+https://www.google.com,2025-04-20T22:47:54.552066,inactive_wait,6,0
+https://www.google.com,2025-04-20T22:48:00.556781,wait,0.21988560958018283,0
+https://www.google.com,2025-04-20T22:48:00.778142,wait,0.30994864583275766,0
+https://www.google.com,2025-04-20T22:48:01.093461,wait,0.7356878050661919,0
+https://www.google.com,2025-04-20T22:48:01.834324,scroll,-1,0
+https://www.google.com,2025-04-20T22:48:03.060185,scroll_duration,1.2255299091339111,0
+https://www.google.com,2025-04-20T22:48:03.060467,wait,0.5800097255805678,0
+https://www.google.com,2025-04-20T22:48:03.644750,wait,0.05344553515567232,0
+https://www.google.com,2025-04-20T22:48:03.703735,scroll,-1,0
+https://www.google.com,2025-04-20T22:48:04.096132,scroll_duration,0.3919658660888672,0
+https://www.google.com,2025-04-20T22:48:04.096406,wait,0.8342174538348104,0
+https://www.google.com,2025-04-20T22:48:04.932306,wait,0.1623993302216712,0
+https://www.google.com/sorry/index?continue=https://www.google.com/search%3Fq%3Dyoutube.com%26sca_esv%3D53edcb558038ad52%26source%3Dhp%26ei%3D5L8FaLGfCo-IptQPzvaFmAs%26iflsig%3DACkRmUkAAAAAaAXN9P9FhkKYHc8lZLyg-71E-DxOlsUq%26ved%3D0ahUKEwixoZ3am-iMAxUPhIkEHU57AbMQ4dUDCA8%26uact%3D5%26oq%3Dyoutube.com%26gs_lp%3DEgdnd3Mtd2l6Igt5b3V0dWJlLmNvbTILEAAYgAQYsQMYgwEyCxAAGIAEGLEDGIMBMggQABiABBixAzILEAAYgAQYsQMYgwEyCxAAGIAEGLEDGIMBMggQABiABBixAzILEAAYgAQYsQMYgwEyCBAAGIAEGLEDMgsQABiABBixAxiDATIFEAAYgARI7CtQAFjuJ3AAeACQAQCYATqgAeEDqgECMTG4AQPIAQD4AQGYAgugAv8DwgILEC4YgAQYsQMYgwHCAhEQLhiABBixAxjRAxiDARjHAcICCBAuGIAEGLEDwgIOEC4YgAQYsQMYgwEYigXCAg4QLhiABBjHARiOBRivAcICDhAAGIAEGLEDGIMBGIoFmAMAkgcCMTGgB9ZosgcCMTG4B_8D%26sclient%3Dgws-wiz%26sei%3D6r8FaJPvI-iB5OMPmoPxoAU&q=EgSQXIdIGOr_lsAGIjBtJNwby0jsrD8n0OW5QIApaBmuTG-YkQXLZNORL9Xri2O8tynlie3nQOX5Kcyy9uoyAnJSWgFD#,2025-04-20T22:48:05.110056,open_website,-1,0

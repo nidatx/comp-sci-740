@@ -1,17 +1,12 @@
-import threading 
 from selenium import webdriver
-from selenium.webdriver.common.by import By
+from selenium.webdriver.edge.service import Service
+from selenium.webdriver.edge.options import Options
 from time import sleep
 
-from webdriver_manager.chrome import ChromeDriverManager
 
-# WebDriver imports (service + options)
-from selenium.webdriver.chrome.service import Service as ChromeService
-from selenium.webdriver.firefox.service import Service as FirefoxService
-from selenium.webdriver.edge.service import Service as EdgeService
-from selenium.webdriver.chrome.options import Options as ChromeOptions
-from selenium.webdriver.firefox.options import Options as FirefoxOptions
-from selenium.webdriver.edge.options import Options as EdgeOptions
+from selenium.webdriver.common.by import By
+
+
 
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -25,7 +20,6 @@ import pickle as pkl
 import os
 import sys
 import time
-import numpy as np
 
 # Constants
 ACTIONS = {
@@ -49,84 +43,36 @@ WEBSITES = {
 }
 
 class WebsiteAutomator:
-    def __init__(self, user_id, max_wait, min_wait, website, max_actions, browser_type=""):
+    def __init__(self, user_id, max_wait, min_wait, website, max_actions):
         self.user_id = user_id
         self.max_wait = max_wait
         self.min_wait = min_wait
         self.website = website
-        self.browser_type = browser_type
         self.max_actions = max_actions
         self.driver = self._setup_driver()
         self.csv_file = self._setup_logging()
-    
-    def _generate_active_OFF_time(self):
-        a = 1.46 # shape
-        b = 0.382 ## scale parameter
-        s = b*np.random.weibull(a, 1)
-
-        return s[0]
         
     def _setup_driver(self):
-        
-        if self.browser_type=="chrome":
-            return self._setup_chrome_driver()
-        elif self.browser_type == "firefox":
-            return self._setup_firefox_driver()
-        elif self.browser_type == "edge":
-            return self._setup_edge_driver()
-        else:
-            raise ValueError("Unknown browser type!! STOP NOW! Browser: {self.browser_type}")
-    
-    def _setup_edge_driver(self):
-        
-        edge_driver_path = "/Users/Patron/Downloads/edgedriver_mac64_m1/msedgedriver"
-        
-        options = EdgeOptions()
-    
-       
+
+        edge_driver_path = "/Users/Patron/Downloads/edgedriver_mac64_m1/msedgedriver"  # <-- change this if needed
+
+        # Setup Edge options
+        options = Options()
+        options.add_argument("start-maximized")  # open window maximized
         options.add_argument("--disable-blink-features=AutomationControlled") 
         options.add_experimental_option("excludeSwitches", ["enable-automation"]) 
         options.add_experimental_option("useAutomationExtension", False) 
         
-        
-        service = EdgeService(edge_driver_path)
+        # Start Edge browser
+        service = Service(edge_driver_path)
         driver = webdriver.Edge(service=service, options=options)
         driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})") 
+
+        
+       
+        
         
         return driver
-    
-    def _setup_chrome_driver(self):
-        
-        options = ChromeOptions() 
-            
-        options.binary_location = "/Users/Patron/Downloads/chrome-mac-arm64/Google Chrome for Testing.app" ## location for browser
-        
-        options.add_argument("--disable-blink-features=AutomationControlled") 
-        options.add_experimental_option("excludeSwitches", ["enable-automation"]) 
-        options.add_experimental_option("useAutomationExtension", False) 
-        
-        driver = webdriver.Chrome(options=options)
-        driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})") 
-        
-        return driver
-    
-    def _setup_firefox_driver(self):
-        
-        options = FirefoxOptions() 
-        
-        options.set_preference("dom.webdriver.enabled", False)
-        options.set_preference("useAutomationExtension", False)
-        
-        service = FirefoxService(executable_path="/Users/Patron/Downloads/geckodriver") ## path to driver
-        driver = webdriver.Firefox(service=service, options=options)
-        
-        driver.execute_script("""
-            Object.defineProperty(navigator, 'webdriver', {
-                get: () => undefined
-            });
-        """)
-        return driver
-    
         
     def _setup_logging(self):
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -202,15 +148,12 @@ class WebsiteAutomator:
                 scroll_dur = self.slow_scroll(random_scroll)
                 self.log_action(action=ACTIONS['SCROLL_DUR'], duration=scroll_dur)
                 
-                # wait_time = random.randint(self.min_wait, self.max_wait) ## ACTIVE WAIT
-                wait_time = self._generate_active_OFF_time()
+                wait_time = random.randint(self.min_wait, self.max_wait) ## ACTIVE WAIT
                 self.log_action(action=ACTIONS['WAIT'], duration=wait_time) 
                 sleep(wait_time) 
             
             elif choose==ACTIONS["WAIT"]:
-                # wait_time = random.randint(self.min_wait, self.max_wait) ## ACTIVE WAIT
-                wait_time = self._generate_active_OFF_time()
-                
+                wait_time = random.randint(self.min_wait, self.max_wait) ## ACTIVE WAIT
                 self.log_action(action=ACTIONS['WAIT'], duration=wait_time)
                 sleep(wait_time)
     
@@ -249,7 +192,7 @@ class WebsiteAutomator:
             # follow a random link on page
             results = self.driver.find_elements(By.TAG_NAME, "a")
             links = []
-            for element in results[0:5]: ## only pick among top 5 results
+            for element in results:
                 href = element.get_attribute("href")
                 
                 if href != None and "accounts" not in href and "support" not in href:
@@ -265,14 +208,8 @@ class WebsiteAutomator:
                 
                 self.browse_page()
 
-                ## go back to google search main page
-                self.driver.get(WEBSITES['GOOGLE'])
-                self.log_action(action=ACTIONS['OPEN_WEBSITE'])
-
             except:
                 print(f"Could not follow link:{link_choose}")
-            
-
         
     def automate_guardian(self, duration_sec):
         
@@ -415,44 +352,15 @@ class WebsiteAutomator:
 def main():
 
     
-    automator_google = WebsiteAutomator(
-        browser_type = "firefox", ## using chrome for testing
-        user_id=0,
-        max_wait=5,
-        min_wait=2,
-        website=WEBSITES['GOOGLE'],
-        max_actions=7
-    )
-
-    automator_tiktok = WebsiteAutomator(
-        browser_type = "firefox", ## using chrome for testing
+    automator = WebsiteAutomator(
         user_id=0,
         max_wait=5,
         min_wait=2,
         website=WEBSITES['TIKTOK'],
         max_actions=7
     )
-    automator_guardian = WebsiteAutomator(
-        browser_type = "firefox", ## using chrome for testing
-        user_id=0,
-        max_wait=5,
-        min_wait=2,
-        website=WEBSITES['GUARDIAN'],
-        max_actions=7
-    )
     
-    t1 = threading.Thread(target=automator_google.run, args=(35,))
-    t2 = threading.Thread(target=automator_tiktok.run, args=(35,))
-    t3 = threading.Thread(target=automator_guardian.run, args=(35,))
-
-
-    t1.start()
-    t2.start()
-    t3.start()
-
-    t1.join()
-    t2.join()
-    t3.join()
+    automator.run(duration_minutes=1)
 
 if __name__ == "__main__":
     main()

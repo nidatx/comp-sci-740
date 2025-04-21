@@ -1,0 +1,12 @@
+website,timestamp,action,duration,user
+https://www.tiktok.com/foryou,2025-04-20T22:47:48.037591,open_website,-1,0
+https://www.tiktok.com,2025-04-20T22:47:49.018095,inactive_wait,-1,0
+https://www.tiktok.com,2025-04-20T22:47:49.131526,wait,4.949637343395992,0
+https://www.tiktok.com,2025-04-20T22:47:54.096409,scroll,-1,0
+https://www.tiktok.com,2025-04-20T22:47:54.096521,inactive_wait,2,0
+https://www.tiktok.com,2025-04-20T22:47:56.100913,inactive_wait,-1,0
+https://www.tiktok.com,2025-04-20T22:47:56.107188,wait,5.249597889872431,0
+https://www.tiktok.com,2025-04-20T22:48:01.368434,scroll,-1,0
+https://www.tiktok.com,2025-04-20T22:48:01.368590,inactive_wait,2,0
+https://www.tiktok.com,2025-04-20T22:48:03.373262,inactive_wait,-1,0
+https://www.tiktok.com,2025-04-20T22:48:03.382341,wait,37.78786721344347,0

@@ -1,0 +1,7 @@
+website,timestamp,action,duration,user
+https://www.theguardian.com,2025-04-17T14:12:24.351873,open_website,-1,0
+https://www.theguardian.com,2025-04-17T14:12:25.199251,inactive_wait,5,0
+https://www.theguardian.com,2025-04-17T14:12:34.327242,inactive_wait,5,0
+https://www.theguardian.com/football/2023/jul/20/sign-up-for-soccer-with-jonathan-wilson-his-free-weekly-newsletter-on-european-soccer,2025-04-17T14:12:39.510337,open_website,-1,0
+https://www.theguardian.com,2025-04-17T14:12:39.513127,scroll,-1,0
+https://www.theguardian.com,2025-04-17T14:12:41.959731,scroll_duration,2.446295976638794,0

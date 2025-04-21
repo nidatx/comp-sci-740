@@ -1,0 +1,7 @@
+website,timestamp,action,duration,user
+https://www.tiktok.com/foryou,2025-04-17T13:09:17.488932,open_website,-1,0
+https://www.tiktok.com,2025-04-17T13:09:18.382299,inactive_wait,-1,0
+https://www.tiktok.com,2025-04-17T13:09:18.392979,wait,0.15393022689473854,0
+https://www.tiktok.com,2025-04-17T13:09:18.571778,scroll,-1,0
+https://www.tiktok.com,2025-04-17T13:09:18.572013,inactive_wait,2,0
+https://www.tiktok.com,2025-04-17T13:09:20.577704,inactive_wait,-1,0
