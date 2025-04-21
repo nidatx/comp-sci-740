@@ -33,9 +33,8 @@ ACTIONS = {
     'SCROLL': "scroll",
     'SCROLL_DUR': "scroll_duration",
     'SEARCH': "search",
-    'WAIT': "wait", ## denotes active waiting time 
-    'ACTIVE_WAIT': "active_wait",
-    'INACTIVE_WAIT': "inactive_wait",
+    'WAIT': "wait", ## denotes active waiting time - inactive wait (think time)
+    'ACTIVE_WAIT': "active_wait", ## drawn from pareto dist
     'CLICK': "click",
     'LOGIN': "login"
 }
@@ -240,7 +239,7 @@ class WebsiteAutomator:
             search_box.send_keys(Keys.RETURN)
             self.log_action(ACTIONS['SEARCH'])
             
-            self.log_action(ACTIONS['INACTIVE_WAIT'],duration=6) ## dont change this one because we want to wait for all the links to show up
+            self.log_action(ACTIONS['ACTIVE_WAIT'],duration=6) ## dont change this one because we want to wait for all the links to show up
             sleep(6)
             
             # Browse results
@@ -288,7 +287,7 @@ class WebsiteAutomator:
         data_links_dict = {}
 
         
-        self.log_action(ACTIONS['INACTIVE_WAIT'],duration=5)
+        self.log_action(ACTIONS['ACTIVE_WAIT'],duration=5)
         sleep(5) ## don't change this wait otherwise we get 'cannot find element' error
 
         elements_with_data_link = self.driver.find_elements(By.CSS_SELECTOR, "[data-link-name]")
@@ -317,7 +316,7 @@ class WebsiteAutomator:
 
         print(len(data_links_dict))
         
-        self.log_action(ACTIONS["INACTIVE_WAIT"],duration=5) 
+        self.log_action(ACTIONS["ACTIVE_WAIT"],duration=5) 
         sleep(5) ## don't change this either
 
         # # Filter out non-article links
@@ -370,7 +369,7 @@ class WebsiteAutomator:
         
         while time.time() < end_time:
             try:
-                self.log_action(action=ACTIONS['INACTIVE_WAIT'])
+                self.log_action(action=ACTIONS['ACTIVE_WAIT'])
                 
                 wait = WebDriverWait(self.driver, 20) ## wait up to max 20 seconds, don't change
                 video_element = wait.until(EC.presence_of_element_located((By.TAG_NAME, "video")))
@@ -392,7 +391,7 @@ class WebsiteAutomator:
                 body.send_keys(Keys.ARROW_DOWN)
                 self.log_action(action=ACTIONS['SCROLL'])
 
-                self.log_action(action=ACTIONS['INACTIVE_WAIT'], duration = 2)
+                self.log_action(action=ACTIONS['ACTIVE_WAIT'], duration = 2)
                 sleep(2) ## don't change
                 
             except Exception as e:
