@@ -1,5 +1,0 @@
-website,timestamp,action,duration,user
-None,2025-04-15T11:25:09.330234,open_website,-1,user1
-None,2025-04-15T11:25:09.330358,inactive_wait,4,user1
-None,2025-04-15T11:25:16.371945,search,-1,user1
-None,2025-04-15T11:25:16.372442,inactive_wait,6,user1

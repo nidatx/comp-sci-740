@@ -1,17 +1,18 @@
+import threading 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from time import sleep
-from find_cache import find_cached_links, read_websites_from_file, build_google_search_cache
+import subprocess
 from webdriver_manager.chrome import ChromeDriverManager
-
+from find_cache import find_cached_links, build_google_search_cache
 # WebDriver imports (service + options)
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.firefox.service import Service as FirefoxService
 from selenium.webdriver.edge.service import Service as EdgeService
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
+# from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 from selenium.webdriver.edge.options import Options as EdgeOptions
-from selenium.webdriver.chrome.service import Service
 
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -33,9 +34,8 @@ ACTIONS = {
     'SCROLL': "scroll",
     'SCROLL_DUR': "scroll_duration",
     'SEARCH': "search",
-    'WAIT': "wait", ## denotes active waiting time 
-    'ACTIVE_WAIT': "inactive_wait", # inactive wait is when the user is looking at the screen or doing an action like scrolling
-    'INACTIVE_WAIT': "active_wait", # active wait time is when the user is waiting for the page to load
+    'WAIT': "wait", ## denotes active waiting time - inactive wait (think time)
+    'ACTIVE_WAIT': "active_wait", ## drawn from pareto dist
     'CLICK': "click",
     'LOGIN': "login"
 }
@@ -49,27 +49,37 @@ WEBSITES = {
 }
 
 class WebsiteAutomator:
-    def __init__(self, user_id, max_wait, min_wait, website, max_actions, caching=False, browser_type=""):
+    def __init__(self, user_id, max_wait, min_wait, website, max_actions, caching, make_profile, browser_type=""):
         self.user_id = user_id
         self.max_wait = max_wait
         self.min_wait = min_wait
         self.website = website
         self.browser_type = browser_type
         self.max_actions = max_actions
+        self.caching = caching
+        self.make_profile = make_profile
         self.driver = self._setup_driver()
         self.csv_file = self._setup_logging()
-        self.caching = caching
     
-    def _generate_active_OFF_time(self):
-        a = 1.46 # shape
-        b = 0.382 ## scale parameter
-        s = b*np.random.weibull(a, 1)
-
-        return s[0]
+    def _generate_inactive_OFF_time(self):
+        # a = 1 # shape
+        # b =  ## scale parameter
+        # s = b*np.random.pareto(a, 1)
+        alpha = 1.5
+        k = 1
+        s = (np.random.pareto(alpha) + 1) * k
+        return s
+    
+    def get_firefox_profile(self, path):
+        all_files = os.listdir(path)
+        for f in all_files:
+            if f.endswith(f".{self.user_id}"):
+                return os.path.join(path, f)
+        return None
         
     def _setup_driver(self):
         
-        if self.browser_type=="google":
+        if self.browser_type=="chrome":
             return self._setup_chrome_driver()
         elif self.browser_type == "firefox":
             return self._setup_firefox_driver()
@@ -80,11 +90,12 @@ class WebsiteAutomator:
     
     def _setup_edge_driver(self):
         
-        edge_driver_path = "/Users/Patron/Downloads/edgedriver_mac64_m1/msedgedriver"
+        edge_driver_path = "/Users/Patron/Documents/sarah/edgedriver_mac64_m1/msedgedriver"
         
         options = EdgeOptions()
-    
-       
+        if self.make_profile == True:
+            options.add_argument(f'user-data-dir=/Users/Patron/Library/Application Support/Microsoft Edge/{self.user_id}')
+            options.add_argument('profile-directory=Default')
         options.add_argument("--disable-blink-features=AutomationControlled") 
         options.add_experimental_option("excludeSwitches", ["enable-automation"]) 
         options.add_experimental_option("useAutomationExtension", False) 
@@ -99,13 +110,17 @@ class WebsiteAutomator:
     def _setup_chrome_driver(self):
         
         options = ChromeOptions() 
-            
-        options.binary_location = "/Users/Patron/Downloads/chrome-mac-arm64/Google Chrome for Testing.app" ## location for browser
+        #'/Users/Patron/Library/Application Support/Google/Chrome'
+        if self.make_profile == True:
+            options.add_argument(f'user-data-dir=/Users/Patron/Library/Application Support/Google/Chrome/{self.user_id}')
+            options.add_argument('profile-directory=Default')
+
+        options.binary_location = "/Users/Patron/Documents/sarah/chrome-mac-arm64/Google Chrome for Testing.app" ## location for browser
         
         options.add_argument("--disable-blink-features=AutomationControlled") 
         options.add_experimental_option("excludeSwitches", ["enable-automation"]) 
         options.add_experimental_option("useAutomationExtension", False) 
-        # driver = webdriver.Chrome(options=options, service=Service(ChromeDriverManager().install()))
+        
         driver = webdriver.Chrome(options=options)
         driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})") 
         
@@ -114,11 +129,21 @@ class WebsiteAutomator:
     def _setup_firefox_driver(self):
         
         options = FirefoxOptions() 
-        
+        if self.make_profile == True:
+            path = '/Users/Patron/Library/Application Support/Firefox/Profiles'
+            profile_path = self.get_firefox_profile(path)
+            if profile_path == None:
+                subprocess.run(["/Applications/Firefox.app/Contents/MacOS/firefox","-CreateProfile", self.user_id])
+                profile_path = self.get_firefox_profile(path)
+            print(f"------FIREFOX PROFILE={profile_path}--------")
+            # options.add_argument = (f'user-data-dir={path}/{self.user_id}')
+            # options.add_argument = ('profile-directory=Default')
+            options.add_argument('-profile')
+            options.add_argument(profile_path)
         options.set_preference("dom.webdriver.enabled", False)
         options.set_preference("useAutomationExtension", False)
         
-        service = FirefoxService(executable_path="/Users/Patron/Downloads/geckodriver") ## path to driver
+        service = FirefoxService(executable_path="/Users/Patron/Documents/sarah/geckodriver") ## path to driver
         driver = webdriver.Firefox(service=service, options=options)
         
         driver.execute_script("""
@@ -204,20 +229,20 @@ class WebsiteAutomator:
                 self.log_action(action=ACTIONS['SCROLL_DUR'], duration=scroll_dur)
                 
                 # wait_time = random.randint(self.min_wait, self.max_wait) ## ACTIVE WAIT
-                wait_time = self._generate_active_OFF_time()
+                wait_time = self._generate_inactive_OFF_time()
                 self.log_action(action=ACTIONS['WAIT'], duration=wait_time) 
                 sleep(wait_time) 
             
             elif choose==ACTIONS["WAIT"]:
                 # wait_time = random.randint(self.min_wait, self.max_wait) ## ACTIVE WAIT
-                wait_time = self._generate_active_OFF_time()
+                wait_time = self._generate_inactive_OFF_time()
                 
                 self.log_action(action=ACTIONS['WAIT'], duration=wait_time)
                 sleep(wait_time)
     
     def automate_google(self, duration_sec):
-        self.driver.get(WEBSITES['GOOGLE'])
         self.log_action(action=ACTIONS['OPEN_WEBSITE'])
+        self.driver.get(WEBSITES['GOOGLE'])
         if self.caching == False:
             # Load search terms
             with open("websites_small.txt", "r", encoding="utf-8") as file:
@@ -241,25 +266,22 @@ class WebsiteAutomator:
                 search_box.send_keys(Keys.RETURN)
                 self.log_action(ACTIONS['SEARCH'], duration=random_website)
                 
-                self.log_action(ACTIONS['INACTIVE_WAIT'],duration=6) ## dont change this one because we want to wait for all the links to show up
+                self.log_action(ACTIONS['ACTIVE_WAIT'],duration=6) ## dont change this one because we want to wait for all the links to show up
                 sleep(6)
                 
                 # Browse results
                 self.browse_page()
-                if self.caching == False:
-                    # follow a random link on page
-                    results = self.driver.find_elements(By.TAG_NAME, "a")
-                    links = []
-                    for element in results:
-                        href = element.get_attribute("href")
-                        
-                        if href != None and "accounts" not in href and "support" not in href:
-                            links.append(href)
-                else:
-                    cache_file = find_cached_links(dir="./google", website=self.website, output_file="curr_google_cache.txt")
-                    links = read_websites_from_file(cache_file)
                 
+                # follow a random link on page
+                results = self.driver.find_elements(By.TAG_NAME, "a")
+                links = []
+                for element in results: ## only pick among top 5 results
+                    href = element.get_attribute("href")
+                    
+                    if href != None and "accounts" not in href and "support" not in href:
+                        links.append(href)
                 
+                # links = links[:5] # only top 5/
                 link_choose = random.choice(links)
                 print(f"link: {link_choose}")
                 try:
@@ -269,21 +291,25 @@ class WebsiteAutomator:
                     
                     self.browse_page()
 
+                    ## go back to google search main page
+                    self.driver.get(WEBSITES['GOOGLE'])
+                    self.log_action(action=ACTIONS['OPEN_WEBSITE'])
+
                 except:
                     print(f"Could not follow link:{link_choose}")
         else:
-            cached_links = build_google_search_cache(log_dir="./google", website=self.website) 
+            # # Load search terms
             # with open("websites_small.txt", "r", encoding="utf-8") as file:
             #     websites_list = [line.strip() for line in file if line.strip()]
-            
+            cached_links = build_google_search_cache(log_dir="./google", website=self.website)
             start_time = time.time()
             end_time = start_time + duration_sec
             
             while time.time() < end_time:
                 
-                random_website = random.choice(list(cached_links.keys()))
+            
                 # seraching for random website from the list
-                # random_website = random.choice(websites_list)
+                random_website = random.choice(list(cached_links.keys()))
                 print(f"Search: {random_website}")
                 search_box = self.driver.find_element(By.NAME, "q")
                 search_box.clear()
@@ -292,29 +318,25 @@ class WebsiteAutomator:
                     search_box.send_keys(i)
                     sleep(0.5)
                 search_box.send_keys(Keys.RETURN)
-                self.log_action(ACTIONS['SEARCH'], duration=random_website)
+                self.log_action(ACTIONS['SEARCH'])
                 
-                self.log_action(ACTIONS['INACTIVE_WAIT'],duration=6) ## dont change this one because we want to wait for all the links to show up
+                self.log_action(ACTIONS['ACTIVE_WAIT'],duration=6) ## dont change this one because we want to wait for all the links to show up
                 sleep(6)
                 
                 # Browse results
                 self.browse_page()
-                # if self.caching == False:
-                #     # follow a random link on page
-                #     results = self.driver.find_elements(By.TAG_NAME, "a")
-                #     links = []
-                #     for element in results:
-                #         href = element.get_attribute("href")
-                        
-                #         if href != None and "accounts" not in href and "support" not in href:
-                #             links.append(href)
-                # else:
-                #     cache_file = find_cached_links(dir="./google", website=self.website, output_file="curr_google_cache.txt")
-                #     links = read_websites_from_file(cache_file)
+                
+                # follow a random link on page
+                results = self.driver.find_elements(By.TAG_NAME, "a")
+                links = []
+                for element in results: ## only pick among top 5 results
+                    href = element.get_attribute("href")
+                    
+                    if href != None and "accounts" not in href and "support" not in href:
+                        links.append(href)
                 
                 
-                # link_choose = random.choice(links)
-                link_choose = random.choice(list(cached_links[random_website])) # should be only one but just in case
+                link_choose = random.choice(list(cached_links[random_website]))
                 print(f"link: {link_choose}")
                 try:
                     
@@ -323,25 +345,30 @@ class WebsiteAutomator:
                     
                     self.browse_page()
 
+                    ## go back to google search main page
+                    self.driver.get(WEBSITES['GOOGLE'])
+                    self.log_action(action=ACTIONS['OPEN_WEBSITE'])
+
                 except:
                     print(f"Could not follow link:{link_choose}")
+        
+                
+
         
     def automate_guardian(self, duration_sec):
         
         self.log_action(action=ACTIONS['OPEN_WEBSITE'])
         self.driver.get(WEBSITES['GUARDIAN'])
-        # there's no browsing here? i am adding it for now
+        # there was no browsing here, adding now
         self.browse_page()
         start_time = time.time()
         end_time = start_time + duration_sec
 
 
-        # if self.caching == False:
+        
         # Get article links
         data_links_dict = {}
-
-        
-        self.log_action(ACTIONS['INACTIVE_WAIT'],duration=5)
+        self.log_action(ACTIONS['ACTIVE_WAIT'],duration=5)
         sleep(5) ## don't change this wait otherwise we get 'cannot find element' error
 
         elements_with_data_link = self.driver.find_elements(By.CSS_SELECTOR, "[data-link-name]")
@@ -370,7 +397,7 @@ class WebsiteAutomator:
 
         print(len(data_links_dict))
         
-        self.log_action(ACTIONS["INACTIVE_WAIT"],duration=5) 
+        self.log_action(ACTIONS["ACTIVE_WAIT"],duration=5) 
         sleep(5) ## don't change this either
 
         # # Filter out non-article links
@@ -382,24 +409,20 @@ class WebsiteAutomator:
         #                 if not any(sub in k for sub in keys_to_remove)}
         keys_to_keep = {'sports', 'most_viewed', 'most_popular', 'headlines','around-the-world'}
         filtered_dict = {k: v for k, v in data_links_dict.items() 
-                        if any(sub in k for sub in keys_to_keep)}
-        all_links = list(filtered_dict.values())
-        links = random.choice(all_links)
+                         if any(sub in k for sub in keys_to_keep)}
         
         # Save links for reference
         with open("links.txt", "w", encoding="utf-8") as f:
             f.write(json.dumps(filtered_dict))
         if self.caching == True:
             links = find_cached_links(dir="./theguardian", website=self.website, output_file="curr_guardian_cache.txt")
-            # all_links = read_websites_from_file(cache_file)
-            # print(f"all links: {links}")
-            # all_links = links
         # Browse articles
-        while time.time() < end_time and all_links:
+        while time.time() < end_time and filtered_dict:
+            links = random.choice(list(filtered_dict.values()))
             if links:
                 link_choose = random.choice(links)
-                self.log_action(action=ACTIONS['OPEN_WEBSITE'], website=link_choose)
                 self.driver.get(link_choose)
+                self.log_action(action=ACTIONS['OPEN_WEBSITE'], website=link_choose)
                 self.browse_page()
 
     def automate_tiktok(self, duration_sec):
@@ -428,7 +451,7 @@ class WebsiteAutomator:
         
         while time.time() < end_time:
             try:
-                self.log_action(action=ACTIONS['INACTIVE_WAIT'])
+                self.log_action(action=ACTIONS['ACTIVE_WAIT'])
                 
                 wait = WebDriverWait(self.driver, 20) ## wait up to max 20 seconds, don't change
                 video_element = wait.until(EC.presence_of_element_located((By.TAG_NAME, "video")))
@@ -450,7 +473,7 @@ class WebsiteAutomator:
                 body.send_keys(Keys.ARROW_DOWN)
                 self.log_action(action=ACTIONS['SCROLL'])
 
-                self.log_action(action=ACTIONS['INACTIVE_WAIT'], duration = 2)
+                self.log_action(action=ACTIONS['ACTIVE_WAIT'], duration = 2)
                 sleep(2) ## don't change
                 
             except Exception as e:
@@ -472,18 +495,54 @@ class WebsiteAutomator:
 
 def main():
 
-    
-    automator = WebsiteAutomator(
-        browser_type = "google", ## using chrome for testing
-        user_id=0,
+    BROWSER = "chrome"
+    CACHING = True
+    TIME = 33
+    MAKE_PROFILE = True
+    automator_google = WebsiteAutomator(
+        browser_type = BROWSER, ## using chrome for testing
+        user_id="googleUser4",
         max_wait=5,
         min_wait=2,
-        website=WEBSITES['GUARDIAN'], ## change this to the website you want to test
+        website=WEBSITES['GOOGLE'],
         max_actions=7,
-        caching=False ## set to True if you want to cache the websites
+        caching=CACHING,
+        make_profile=MAKE_PROFILE
+    )
+
+    automator_tiktok = WebsiteAutomator(
+        browser_type = BROWSER, ## using chrome for testing
+        user_id="tiktokUser4",
+        max_wait=5,
+        min_wait=2,
+        website=WEBSITES['TIKTOK'],
+        max_actions=7,
+        caching=CACHING,
+        make_profile=MAKE_PROFILE
+    )
+    automator_guardian = WebsiteAutomator(
+        browser_type = BROWSER, ## using chrome for testing
+        user_id="guardianUser4",
+        max_wait=5,
+        min_wait=2,
+        website=WEBSITES['GUARDIAN'],
+        max_actions=7,
+        caching=CACHING,
+        make_profile=MAKE_PROFILE
     )
     
-    automator.run(duration_minutes=1)
+    t1 = threading.Thread(target=automator_google.run, args=(TIME,))
+    t2 = threading.Thread(target=automator_tiktok.run, args=(TIME,))
+    t3 = threading.Thread(target=automator_guardian.run, args=(TIME,))
+
+
+    t1.start()
+    t2.start()
+    t3.start()
+
+    t1.join()
+    t2.join()
+    t3.join()
 
 if __name__ == "__main__":
     main()
