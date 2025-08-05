@@ -15,4 +15,4 @@ You can see our script in action by running it using `python3 automate_users.py`
 
 You do need to have the appropraite web drivers installed. We recommed using the 'for testing' versions Chrome/Edge/Firefox since browser updates are frequent and it is difficult to keep up with all these changes in your code.
 
-While you're here, have a look at our Final Report if you're interested (or maybe just the Poster if you're interested but short on time).
+While you're here, have a look at our [Final Report](https://github.com/nidatx/comp-sci-740/blob/main/Final%20Report.pdf) if you're interested (or maybe just the Poster if you're interested but short on time).
