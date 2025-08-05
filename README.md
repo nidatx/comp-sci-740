@@ -4,3 +4,15 @@ While the self-similar nature of Web traffic is well-established and well-studie
 the landscape of the Internet. The complexity of web pages and the strategies employed by web browsers are different now. Our project simulates users browsing popular
 websites, capture HTTPS traffic and analyze how factors like prefetching, and local caching impact the self-similarity
 of web traffic in the context of modern browsers and webpages. 
+
+We use 3 different we browsers: Chrome, Firefox and Edge.
+
+Our main script is the `automate_users.py`. This script launches 3 threads, each one opens a different website and performs actions simulting a real life user.
+
+You can also change the type of web browser you would like to use, currently the `WebsiteAutomator` class supports Chrome, Edge and Firefox. To change the browser type just pass in the desired type when initializing the `WebsiteAutomator` class.
+
+You can see our script in action by running it using `python3 automate_users.py`.
+
+You do need to have the appropraite web drivers installed. We recommed using the 'for testing' versions Chrome/Edge/Firefox since browser updates are frequent and it is difficult to keep up with all these changes in your code.
+
+While you're here, have a look at our Final Report if you're interested (or maybe just the Poster if you're interested but short on time).
